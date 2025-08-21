@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encurtador de URL</title>
+
+  
+  <link rel="icon" type="image/png" sizes="32x32" href="./gengar-favicon.png">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: rgba(30,30,30,0.9);
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+      transition: all 0.3s ease;
+    }
+
+    .container:hover {
+      transform: scale(1.02);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 25px;
+      color: #a259ff;
+      letter-spacing: 1px;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 20px;
+      font-size: 16px;
+      background-color: #1f1f1f;
+      color: #fff;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 8px #a259ff;
+      background-color: #2a2a2a;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      background-color: #a259ff;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #8e3dff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(162,89,255,0.4);
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #121212;
+      color: #a259ff;
+      word-break: break-all;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .copied {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #4caf50;
+      display: none;
+    }
+
+    a {
+      color: #a259ff;
+      text-decoration: none;
+    }
+
+    .gengar-gif {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      width: 60px;
+      height: 60px;
+      opacity: 0.9;
+      transition: all 0.3s ease;
+    }
+
+    .gengar-gif:hover {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Encurtador de URL</h1>
+    <input type="text" id="urlInput" placeholder="Cole sua URL aqui" />
+    <button id="shortenBtn">Encurtar</button>
+    <div id="result" class="result" style="display:none;"></div>
+    <div id="copiedMsg" class="copied">✅ Link copiado para a área de transferência!</div>
+  </div>
+
+  <img class="gengar-gif" src="https://i.pinimg.com/originals/4f/d0/c0/4fd0c049c173c9beb5a0101a84deb6f9.gif" alt="Gengar GIF">
+
+  <script>
+    const button = document.getElementById('shortenBtn');
+    const input = document.getElementById('urlInput');
+    const resultDiv = document.getElementById('result');
+    const copiedMsg = document.getElementById('copiedMsg');
+
+    button.addEventListener('click', async () => {
+      const url = input.value.trim();
+      if (!url) {
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = 'Por favor, insira uma URL.';
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:8080/api/url/encurtar?url=${encodeURIComponent(url)}`, {
+          method: 'POST'
+        });
+
+        if (!response.ok) throw new Error('Erro ao conectar ao backend!');
+
+        const data = await response.json();
+        if (data.error) {
+          resultDiv.style.display = 'block';
+          resultDiv.textContent = data.error;
+        } else {
+          const fullUrl = `http://localhost:8080/${data.code}`;
+          resultDiv.style.display = 'block';
+          resultDiv.innerHTML = `URL encurtada: <a href="${fullUrl}" target="_blank">${fullUrl}</a>`;
+
+          try {
+            await navigator.clipboard.writeText(fullUrl);
+            copiedMsg.style.display = 'block';
+            setTimeout(() => copiedMsg.style.display = 'none', 2500);
+          } catch (err) {
+            console.error("Erro ao copiar:", err);
+          }
+        }
+      } catch (err) {
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = 'Erro ao conectar ao backend!';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
